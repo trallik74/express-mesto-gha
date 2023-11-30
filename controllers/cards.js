@@ -23,7 +23,7 @@ const deleteCard = (req, res) => {
       if (err.name === 'CastError') {
         return res
           .status(HTTP_STATUS_BAD_REQUEST)
-          .send({ message: 'Неверный идентификатор карточки' });
+          .send({ message: 'Неверный формат идентификатора карточки' });
       }
       return res
         .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
@@ -75,7 +75,7 @@ const likeCard = (req, res) => cardModel
     if (err.name === 'CastError') {
       return res
         .status(HTTP_STATUS_BAD_REQUEST)
-        .send({ message: 'Неверный идентификатор карточки' });
+        .send({ message: 'Неверный формат идентификатора карточки' });
     }
     return res
       .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
@@ -101,7 +101,7 @@ const dislikeCard = (req, res) => cardModel
     if (err.name === 'CastError') {
       return res
         .status(HTTP_STATUS_BAD_REQUEST)
-        .send({ message: 'Неверный идентификатор карточки' });
+        .send({ message: 'Неверный формат идентификатора карточки' });
     }
     return res
       .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
