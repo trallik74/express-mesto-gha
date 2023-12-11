@@ -37,7 +37,7 @@ const createUser = (req, res) => {
     .then((user) => res.status(HTTP_STATUS_CREATED).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: `Ошибка валидации: ${err.message}` });
+        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
       }
       return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: `Ошибка сервера: ${err.message}` });
     });
@@ -60,7 +60,7 @@ const updateUserProfile = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: `Ошибка валидации: ${err.message}` });
+        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
       }
       return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: `Ошибка сервера: ${err.message}` });
     });
@@ -83,7 +83,7 @@ const updateUserAvatar = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: `Ошибка валидации: ${err.message}` });
+        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
       }
       return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: `Ошибка сервера: ${err.message}` });
     });

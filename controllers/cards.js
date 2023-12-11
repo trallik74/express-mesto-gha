@@ -48,7 +48,7 @@ const createCard = (req, res) => {
       if (err.name === 'ValidationError') {
         return res
           .status(HTTP_STATUS_BAD_REQUEST)
-          .send({ message: `Ошибка валидации: ${err.message}` });
+          .send({ message: err.message });
       }
       return res
         .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
