@@ -7,8 +7,8 @@ const auth = require('../middlewares/auth');
 const usersRouter = require('./users');
 const cardsRouter = require('./cards');
 
-router.post('/sign-up', createUser);
-router.post('/sign-in', loginUser);
+router.post('/signup', createUser);
+router.post('/signin', loginUser);
 router.use(auth);
 router.use('/users', usersRouter);
 router.use('/cards', cardsRouter);

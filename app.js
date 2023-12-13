@@ -8,12 +8,6 @@ const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
-app.use((req, res, next) => {
-  req.user = {
-    _id: '6564a8de08e051396c5945a9',
-  };
-  next();
-});
 app.use(appRouter);
 
 mongoose
