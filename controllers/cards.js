@@ -4,20 +4,26 @@ const {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_FORBIDDEN,
 } = require('node:http2').constants;
 const cardModel = require('../models/card');
 
 const deleteCard = (req, res) => {
   const { cardId } = req.params;
   return cardModel
-    .findByIdAndDelete(cardId)
+    .findById(cardId)
     .then((card) => {
       if (!card) {
         return res
           .status(HTTP_STATUS_NOT_FOUND)
           .send({ message: 'Карточка с таким идентификатором не найдена' });
       }
-      return res.status(HTTP_STATUS_OK).send({ message: 'Карточка удалена' });
+      if (String(card.owner) !== req.user._id) {
+        return res
+          .status(HTTP_STATUS_FORBIDDEN)
+          .send({ message: 'Вы не владелец карточки' });
+      }
+      return cardModel.findByIdAndDelete(cardId).then(() => res.status(HTTP_STATUS_OK).send({ message: 'Карточка удалена' }));
     })
     .catch((err) => {
       if (err.name === 'CastError') {
