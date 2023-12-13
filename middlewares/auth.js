@@ -1,4 +1,4 @@
-const { HTTP_STATUS_FORBIDDEN } = require('node:http2').constants;
+const { HTTP_STATUS_UNAUTHORIZED } = require('node:http2').constants;
 const { verifyWebToken } = require('../utils/jwt');
 
 const auth = async (req, res, next) => {
@@ -7,7 +7,7 @@ const auth = async (req, res, next) => {
 
   if (!token || !payload) {
     return res
-      .status(HTTP_STATUS_FORBIDDEN)
+      .status(HTTP_STATUS_UNAUTHORIZED)
       .send({ message: 'Необходима авторизация' });
   }
   req.user = payload;
