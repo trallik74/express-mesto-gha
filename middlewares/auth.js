@@ -1,7 +1,7 @@
 const { HTTP_STATUS_UNAUTHORIZED } = require('node:http2').constants;
 const { verifyWebToken } = require('../utils/jwt');
 
-const exeptionHandler = (res) => res
+const authExeptionHandler = (res) => res
   .status(HTTP_STATUS_UNAUTHORIZED)
   .send({ message: 'Необходима авторизация' });
 
@@ -10,7 +10,7 @@ const auth = async (req, res, next) => {
   const token = req.headers.authorization;
   let payload;
   if (!token) {
-    return exeptionHandler(res);
+    return authExeptionHandler(res);
   }
 
   if (token.startsWith('Bearer ')) {
@@ -21,14 +21,14 @@ const auth = async (req, res, next) => {
     payload = await verifyWebToken(token);
 
     if (!payload) {
-      return exeptionHandler(res);
+      return authExeptionHandler(res);
     }
 
     req.user = payload;
     return next();
   } catch (err) {
     console.log(err);
-    return exeptionHandler(res);
+    return authExeptionHandler(res);
   }
 };
 

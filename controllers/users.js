@@ -11,16 +11,7 @@ const bcrypt = require('bcryptjs');
 const userModel = require('../models/user');
 const { SALT_ROUNDS } = require('../utils/config');
 const { generateWebToken } = require('../utils/jwt');
-
 /* const WEEK_IN_MS = 604800000; */
-
-const checkEmailAndPasswordFill = (email, password, res) => {
-  if (!email || !password) {
-    return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Поля "email" и "password" должно быть заполнено' });
-    /* next(); */
-  }
-  return null;
-};
 
 const getUserById = (res, id) => userModel
   .findById(id)
@@ -39,24 +30,24 @@ const getUserById = (res, id) => userModel
 
 const readUser = (req, res) => {
   const { userId } = req.params;
-  getUserById(res, userId);
+  return getUserById(res, userId);
 };
 
-const readCurrentUser = (req, res) => {
-  getUserById(res, req.user._id);
-};
+const readCurrentUser = (req, res) => getUserById(res, req.user._id);
 
 const readAllUsers = (req, res) => userModel
   .find({})
   .then((users) => res.status(HTTP_STATUS_OK).send(users))
   .catch((err) => res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: `Ошибка сервера: ${err.message}` }));
 
-const createUser = (req, res, next) => {
+const createUser = (req, res) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
 
-  checkEmailAndPasswordFill(email, password, res, next);
+  if (!email || !password) {
+    return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Поля "email" и "password" должно быть заполнено' });
+  }
   /* Здесь могла быть ваша валидация пароля */
 
   return bcrypt.hash(password, SALT_ROUNDS)
@@ -99,18 +90,18 @@ const updateUserProfile = (req, res) => {
     });
 };
 
-const loginUser = (req, res, next) => {
+const loginUser = (req, res) => {
   const { email, password } = req.body;
 
-  checkEmailAndPasswordFill(email, password, res, next);
+  if (!email || !password) {
+    return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Поля "email" и "password" должно быть заполнено' });
+  }
 
   return userModel.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
         return res.status(HTTP_STATUS_FORBIDDEN).send({ message: 'Неправильный email или пароль' });
       }
-      console.log(password);
-      console.log(user);
       return bcrypt.compare(password, user.password, (err, isMatch) => {
         if (err) {
           throw err;
