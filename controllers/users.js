@@ -12,7 +12,7 @@ const userModel = require('../models/user');
 const { SALT_ROUNDS } = require('../utils/config');
 const { generateWebToken } = require('../utils/jwt');
 
-const WEEK_IN_MS = 604800000;
+/* const WEEK_IN_MS = 604800000; */
 
 const checkEmailAndPasswordFill = (email, password, res) => {
   if (!email || !password) {
@@ -104,11 +104,13 @@ const loginUser = (req, res, next) => {
 
   checkEmailAndPasswordFill(email, password, res, next);
 
-  return userModel.findOne({ email })
+  return userModel.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
         return res.status(HTTP_STATUS_FORBIDDEN).send({ message: 'Неправильный email или пароль' });
       }
+      console.log(password);
+      console.log(user);
       return bcrypt.compare(password, user.password, (err, isMatch) => {
         if (err) {
           throw err;
@@ -116,11 +118,12 @@ const loginUser = (req, res, next) => {
         if (!isMatch) {
           return res.status(HTTP_STATUS_FORBIDDEN).send({ message: 'Неправильный email или пароль' });
         }
-        return res.status(HTTP_STATUS_OK).cookie('jwt', generateWebToken(user._id), {
+        /* return res.status(HTTP_STATUS_OK).cookie('jwt', generateWebToken(user._id), {
           maxAge: WEEK_IN_MS,
           httpOnly: true,
           sameSite: true,
-        }).end();
+        }).end(); */
+        return res.status(HTTP_STATUS_OK).send({ jwt: generateWebToken(user._id) });
       });
     })
     .catch((err) => res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: `Ошибка сервера: ${err.message}` }));
