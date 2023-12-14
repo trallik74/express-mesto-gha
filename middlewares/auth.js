@@ -7,14 +7,14 @@ const authExeptionHandler = (res) => res
 
 const auth = async (req, res, next) => {
   /* const token = req.cookies.jwt; */
-  const token = req.headers.authorization;
+  let token = req.headers.authorization;
   let payload;
   if (!token) {
     return authExeptionHandler(res);
   }
 
   if (token.startsWith('Bearer ')) {
-    token.replace('Bearer ', '');
+    token = token.replace('Bearer ', '');
   }
 
   try {
