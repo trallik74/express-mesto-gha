@@ -2,7 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 /* const cookieParser = require('cookie-parser'); */
 const appRouter = require('./routes/index');
-const { PORT, DB_URL } = require('./utils/config');
+const { PORT } = require('./utils/config');
+
+const DB_URL = 'mongodb://127.0.0.1:27017/mestodb';
 
 const app = express();
 
