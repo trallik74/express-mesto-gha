@@ -1,52 +1,51 @@
 const {
   HTTP_STATUS_OK,
   HTTP_STATUS_CREATED,
-  HTTP_STATUS_BAD_REQUEST,
-  HTTP_STATUS_NOT_FOUND,
-  HTTP_STATUS_INTERNAL_SERVER_ERROR,
-  HTTP_STATUS_CONFLICT,
-  HTTP_STATUS_FORBIDDEN,
 } = require('node:http2').constants;
 const bcrypt = require('bcryptjs');
 const userModel = require('../models/user');
 const { SALT_ROUNDS } = require('../utils/config');
 const { generateWebToken } = require('../utils/jwt');
+const BadRequestError = require('../exeptions/bad-request-error');
+const NotFoundError = require('../exeptions/not-found-error');
+const ForbiddenError = require('../exeptions/forbidden-error');
+const ConflictError = require('../exeptions/conflict-error');
 /* const WEEK_IN_MS = 604800000; */
 
-const getUserById = (res, id) => userModel
+const getUserById = (res, id, next) => userModel
   .findById(id)
   .then((user) => {
     if (!user) {
-      return res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь с таким идентификатором не найдена' });
+      return next(new NotFoundError('Пользователь с таким идентификатором не найдена'));
     }
     return res.status(HTTP_STATUS_OK).send(user);
   })
   .catch((err) => {
     if (err.name === 'CastError') {
-      return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Неверный формат идентификатора пользователя' });
+      return next(new BadRequestError('Неверный формат идентификатора пользователя'));
     }
-    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: `Ошибка сервера: ${err.message}` });
+    return next(err);
   });
 
-const readUser = (req, res) => {
+const readUser = (req, res, next) => {
   const { userId } = req.params;
-  return getUserById(res, userId);
+  return getUserById(res, userId, next);
 };
 
-const readCurrentUser = (req, res) => getUserById(res, req.user._id);
+const readCurrentUser = (req, res, next) => getUserById(res, req.user._id, next);
 
-const readAllUsers = (req, res) => userModel
+const readAllUsers = (req, res, next) => userModel
   .find({})
   .then((users) => res.status(HTTP_STATUS_OK).send(users))
-  .catch((err) => res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: `Ошибка сервера: ${err.message}` }));
+  .catch(next);
 
-const createUser = (req, res) => {
+const createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
 
   if (!email || !password) {
-    return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Поля "email" и "password" должно быть заполнено' });
+    return next(new BadRequestError('Поля "email" и "password" должно быть заполнено'));
   }
   /* Здесь могла быть ваша валидация пароля */
 
@@ -55,19 +54,21 @@ const createUser = (req, res) => {
       .create({
         name, about, avatar, email, password: hash,
       }))
-    .then((user) => res.status(HTTP_STATUS_CREATED).send(user))
+    .then((user) => res.status(HTTP_STATUS_CREATED).send({
+      email: user.email, name: user.name, about: user.about, avatar: user.avatar,
+    }))
     .catch((err) => {
       if (err.name === 'MongoServerError' && err.code === 11000) {
-        return res.status(HTTP_STATUS_CONFLICT).send({ message: 'Этот email уже используется' });
+        return next(new ConflictError('Этот email уже используется'));
       }
       if (err.name === 'ValidationError') {
-        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
+        return next(new BadRequestError(err.message));
       }
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: `Ошибка сервера: ${err.message}` });
+      return next(err);
     });
 };
 
-const updateUserProfile = (req, res) => {
+const updateUserProfile = (req, res, next) => {
   const { name, about } = req.body;
 
   return userModel
@@ -78,36 +79,36 @@ const updateUserProfile = (req, res) => {
     )
     .then((user) => {
       if (!user) {
-        return res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь с таким идентификатором не найдена' });
+        return next(new NotFoundError('Пользователь с таким идентификатором не найдена'));
       }
       return res.status(HTTP_STATUS_OK).send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
+        return next(new BadRequestError(err.message));
       }
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: `Ошибка сервера: ${err.message}` });
+      return next(err);
     });
 };
 
-const loginUser = (req, res) => {
+const loginUser = (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Поля "email" и "password" должно быть заполнено' });
+    return next(new BadRequestError('Поля "email" и "password" должно быть заполнено'));
   }
 
   return userModel.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        return res.status(HTTP_STATUS_FORBIDDEN).send({ message: 'Неправильный email или пароль' });
+        return next(new ForbiddenError('Неправильный email или пароль'));
       }
       return bcrypt.compare(password, user.password, (err, isMatch) => {
         if (err) {
           throw err;
         }
         if (!isMatch) {
-          return res.status(HTTP_STATUS_FORBIDDEN).send({ message: 'Неправильный email или пароль' });
+          return next(new ForbiddenError('Неправильный email или пароль'));
         }
         /* return res.status(HTTP_STATUS_OK).cookie('jwt', generateWebToken(user._id), {
           maxAge: WEEK_IN_MS,
@@ -117,10 +118,10 @@ const loginUser = (req, res) => {
         return res.status(HTTP_STATUS_OK).send({ jwt: generateWebToken(user._id) });
       });
     })
-    .catch((err) => res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: `Ошибка сервера: ${err.message}` }));
+    .catch(next);
 };
 
-const updateUserAvatar = (req, res) => {
+const updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
   return userModel
@@ -131,15 +132,15 @@ const updateUserAvatar = (req, res) => {
     )
     .then((user) => {
       if (!user) {
-        return res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь с таким идентификатором не найдена' });
+        return next(new NotFoundError('Пользователь с таким идентификатором не найдена'));
       }
       return res.status(HTTP_STATUS_OK).send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
+        return next(new BadRequestError(err.message));
       }
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: `Ошибка сервера: ${err.message}` });
+      return next(err);
     });
 };
 
