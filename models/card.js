@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { URL_REGEX } = require('../utils/config');
 
 const cardSchema = new mongoose.Schema(
   {
@@ -11,6 +12,10 @@ const cardSchema = new mongoose.Schema(
     link: {
       type: String,
       required: [true, 'Поле "link" должно быть заполнено'],
+      validator: {
+        validate: (v) => URL_REGEX.test(v),
+        message: 'Неправильный формат url',
+      },
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,

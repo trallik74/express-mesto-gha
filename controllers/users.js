@@ -8,7 +8,7 @@ const { SALT_ROUNDS } = require('../utils/config');
 const { generateWebToken } = require('../utils/jwt');
 const BadRequestError = require('../exeptions/bad-request-error');
 const NotFoundError = require('../exeptions/not-found-error');
-const ForbiddenError = require('../exeptions/forbidden-error');
+const UnauthorizedError = require('../exeptions/unauthorized-error');
 const ConflictError = require('../exeptions/conflict-error');
 /* const WEEK_IN_MS = 604800000; */
 
@@ -101,14 +101,14 @@ const loginUser = (req, res, next) => {
   return userModel.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        return next(new ForbiddenError('Неправильный email или пароль'));
+        return next(new UnauthorizedError('Неправильный email или пароль'));
       }
       return bcrypt.compare(password, user.password, (err, isMatch) => {
         if (err) {
           throw err;
         }
         if (!isMatch) {
-          return next(new ForbiddenError('Неправильный email или пароль'));
+          return next(new UnauthorizedError('Неправильный email или пароль'));
         }
         /* return res.status(HTTP_STATUS_OK).cookie('jwt', generateWebToken(user._id), {
           maxAge: WEEK_IN_MS,
