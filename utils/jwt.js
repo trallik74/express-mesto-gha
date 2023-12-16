@@ -1,24 +1,15 @@
 const jwt = require('jsonwebtoken');
-const userModel = require('../models/user');
 const { JWT_ACCESS_SECRET } = require('./config');
+const UnauthorizedError = require('../exeptions/unauthorized-error');
 
 const generateWebToken = (_id) => jwt.sign({ _id }, JWT_ACCESS_SECRET, { expiresIn: '7d' });
 
-const verifyWebToken = (token) => jwt.verify(token, JWT_ACCESS_SECRET, (err, decoded) => {
+const verifyWebToken = (token, next) => jwt.verify(token, JWT_ACCESS_SECRET, (err, decoded) => {
   if (err) {
     console.log(err);
-    return null;
+    return next(new UnauthorizedError('Необходима авторизация'));
   }
-  return userModel
-    .findById(decoded._id)
-    .then((user) => {
-      if (!user) return null;
-      return { _id: decoded._id };
-    })
-    .catch((error) => {
-      console.log(error);
-      return null;
-    });
+  return { _id: decoded._id };
 });
 
 module.exports = {

@@ -10,7 +10,6 @@ const BadRequestError = require('../exeptions/bad-request-error');
 const NotFoundError = require('../exeptions/not-found-error');
 const UnauthorizedError = require('../exeptions/unauthorized-error');
 const ConflictError = require('../exeptions/conflict-error');
-/* const WEEK_IN_MS = 604800000; */
 
 const getUserById = (res, id, next) => userModel
   .findById(id)
@@ -43,11 +42,6 @@ const createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
-
-  if (!email || !password) {
-    return next(new BadRequestError('Поля "email" и "password" должно быть заполнено'));
-  }
-  /* Здесь могла быть ваша валидация пароля */
 
   return bcrypt.hash(password, SALT_ROUNDS)
     .then((hash) => userModel
@@ -94,10 +88,6 @@ const updateUserProfile = (req, res, next) => {
 const loginUser = (req, res, next) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    return next(new BadRequestError('Поля "email" и "password" должно быть заполнено'));
-  }
-
   return userModel.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
@@ -110,11 +100,6 @@ const loginUser = (req, res, next) => {
         if (!isMatch) {
           return next(new UnauthorizedError('Неправильный email или пароль'));
         }
-        /* return res.status(HTTP_STATUS_OK).cookie('jwt', generateWebToken(user._id), {
-          maxAge: WEEK_IN_MS,
-          httpOnly: true,
-          sameSite: true,
-        }).end(); */
         return res.status(HTTP_STATUS_OK).send({ jwt: generateWebToken(user._id) });
       });
     })

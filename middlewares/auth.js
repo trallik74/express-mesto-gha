@@ -1,10 +1,8 @@
 const { verifyWebToken } = require('../utils/jwt');
 const UnauthorizedError = require('../exeptions/unauthorized-error');
 
-const auth = async (req, res, next) => {
-  /* const token = req.cookies.jwt; */
+const auth = (req, res, next) => {
   let token = req.headers.authorization;
-  let payload;
   if (!token) {
     return next(new UnauthorizedError('Необходима авторизация'));
   }
@@ -13,16 +11,12 @@ const auth = async (req, res, next) => {
     token = token.replace('Bearer ', '');
   }
 
-  try {
-    payload = await verifyWebToken(token);
+  const payload = verifyWebToken(token, next);
 
-    if (!payload) {
-      return next(new UnauthorizedError('Необходима авторизация'));
-    }
-  } catch (err) {
-    console.log(err);
+  if (!payload) {
     return next(new UnauthorizedError('Необходима авторизация'));
   }
+
   req.user = payload;
   return next();
 };
