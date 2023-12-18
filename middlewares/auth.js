@@ -13,12 +13,7 @@ const auth = async (req, res, next) => {
 
   try {
     const payload = verifyWebToken(token);
-
-    if (!payload) {
-      return next(new UnauthorizedError('Необходима авторизация'));
-    }
-
-    req.user = payload;
+    req.user = { _id: payload._id };
   } catch (err) {
     console.log(err);
     return next(new UnauthorizedError('Необходима авторизация'));
